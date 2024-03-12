@@ -1,6 +1,7 @@
 import { database } from '../db.js';
 import generateToken from '../generateToken.js';
 import { hash, unHash } from '../hash.js';
+import { ObjectId } from 'mongodb';
 
 const Users = database.collection('users');
 const Dealerships = database.collection('dealerships');
@@ -8,7 +9,7 @@ const Cars = database.collection('cars');
 const SoldCars = database.collection('soldCars');
 
 export const createDealer = async (req, res) => {
-    const { name, email, location, info, password, cars, deals, soldCars } = req.body;
+    const { name, email, location, info, password, deals, soldCars } = req.body;
     if (!name || !email || !password) {
         res.status(400).send('Required fields missing');
         return;
@@ -19,6 +20,7 @@ export const createDealer = async (req, res) => {
         return;
     }
     const hashedPassword = await hash(password);
+    const cars = [];
     const newDealer = await Dealerships.insertOne(
         { name, email, location, info, password: hashedPassword, cars, deals, soldCars }
     );
@@ -55,12 +57,22 @@ export const logoutDealer = async (req, res) => {
 
 export const addCar = async (req, res) => {
     const { _id, type, name, model, info } = req.body;
+    if (!name || !type || !model) {
+        res.status(400).send('Missing required parameters');
+        return;
+    }
     const car = await Cars.insertOne({ type, name, model, info, dealer: _id });
-    const dealer = await Dealerships.updateOne({ _id }, { $addToSet: { cars: `${car._id}` } });
-    if (dealer)
-        res.status(202).send('Successfully added car to dealership');
-    else
-        res.status(400).send('No such dealership found');
+    if (car) {
+        console.log(`${car.insertedId}`);
+        const fff = new ObjectId(_id);
+        const dealer = await Dealerships.updateOne({ _id: fff }, { $addToSet: { cars: `${car.insertedId}` } });
+        if (dealer) {
+            console.log(dealer);
+            res.status(202).send('Successfully added car to dealership');
+        }
+        else
+            res.status(400).send('No such dealership found');
+    }
 }
 
 export const getDeals = async (req, res) => {

@@ -7,7 +7,7 @@ const Dealerships = database.collection('dealerships');
 const Cars = database.collection('cars');
 
 export const allCars = async (req, res) => {
-    const cars = await Cars.find({});
+    const cars = await Cars.find({}).toArray();
     if (cars)
         res.status(202).send(cars);
     else
@@ -16,9 +16,9 @@ export const allCars = async (req, res) => {
 
 export const carsByDealership = async (req, res) => {
     const { _id } = req.body;
-    const dealers = await Dealerships.find({ _id });
+    const dealer = await Dealerships.findOne({ _id });
     if (dealers) {
-        const cars = await dealers.cars.map(async (car) => await Cars.findOne({ _id: car }));
+        const cars = await dealer.cars.map(async (car) => await Cars.findOne({ _id: car }));
         if(cars)
             res.status(202).send(cars);
         else

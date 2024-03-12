@@ -54,19 +54,19 @@ export const logoutUser = async (req, res) => {
 };
 
 export const carsByDealership = async (req, res) => {
-    // const { name } = req.body;
-    const cars = await Users.find({});
+    const { name } = req.body;
+    const cars = await Cars.find({}).toArray();
     if (cars) {
         console.log(cars);
-        // const dealers = await cars.dealers.map(async (_id) => await Dealerships.find({ _id }));
-        // if (dealers) {
-        //     const updatedDealers = dealers.map(dealer => {
-        //         return { ...dealer, password: '', soldCars: [] }
-        //     });
-        //     res.status(200).send(updatedDealers);
-        // }
-        // else
-        //     res.status(400).send('No dealer has this car available');
+        const dealers = await cars.map(async (_id) => await Dealerships.find({ _id }));
+        if (dealers) {
+            const updatedDealers = dealers.map(dealer => {
+                return { ...dealer, password: '', soldCars: [] }
+            });
+            res.status(200).send(updatedDealers);
+        }
+        else
+            res.status(400).send('No dealer has this car available');
     }
     else
         res.status(400).send('No such car exsits');
